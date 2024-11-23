@@ -147,6 +147,24 @@ async def predict_items(file: UploadFile = File(...)):
     return FileResponse(output_file, media_type='text/csv', filename='output.csv')
 
 
+@app.post("/predict_items_json")
+def predict_items(items: Items):
+    """Предсказание по списку записей"""
+    predictions = []
+    for item in items.objects:
+        d = item.dict()
+        try:
+            features = __preprocess_item(item)
+            prediction = model.predict(features)[0]
+            d.update({'selling_price': float(prediction)})
+            predictions.append(d)
+        except Exception:
+            d.update({'selling_price': "Error"})
+            predictions.append(d)
+
+    return {"objects": predictions}
+
+
 if __name__ == "__main__":
     random.seed(42)
     np.random.seed(42)
